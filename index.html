@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>전화상담 신뢰도 자가진단 테스트 (25문항)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Pretendard / Noto Sans KR / Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans KR"', 'Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef4ff',
+                            100: '#d9e6ff',
+                            200: '#bcd4ff',
+                            500: '#3b82f6',
+                            600: '#1e40af', // 신뢰감을 주는 딥 네이비 블루
+                            700: '#1e3a8a',
+                            800: '#172554',
+                        },
+                        accent: {
+                            500: '#0d9488', // 차분한 틸(Teal)
+                            600: '#0f766e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 커스텀 스크롤바 및 부드러운 애니메이션 */
+        html {
+            scroll-behavior: smooth;
+        }
+        body {
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+        .radio-btn-label {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .radio-btn-input:checked + .radio-btn-label {
+            background-color: #1e40af;
+            color: #ffffff;
+            border-color: #1e40af;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.25);
+        }
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* PDF 저장 / 인쇄 전용 스타일 */
+        @media print {
+            body {
+                background-color: #ffffff !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            header, .no-print, #toast-box, #clear-modal {
+                display: none !important;
+            }
+            main {
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            #result-section, #instructor-section {
+                box-shadow: none !important;
+            }
+            .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl {
+                box-shadow: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+    <!-- 상단 고정 진행률 바 & 헤더 -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-sm">
+                    <i data-lucide="headset" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-slate-900 text-sm sm:text-base leading-tight">전화상담 신뢰도 자가진단</h1>
+                    <p class="text-[11px] sm:text-xs text-slate-500">비대면 커뮤니케이션 역량 진단 (25문항)</p>
+                </div>
+            </div>
+            
+            <!-- 진행 현황 뱃지 -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <button type="button" onclick="toggleInstructorView()" id="instructor-nav-btn" class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 border border-brand-200 px-2.5 sm:px-3 py-1.5 rounded-lg transition">
+                    <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i>
+                    <span>강사 대시보드</span>
+                </button>
+                <button type="button" onclick="fillDemoAnswers()" class="hidden md:inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-brand-600 bg-slate-100 hover:bg-brand-50 px-2.5 py-1.5 rounded-lg transition" title="강사용 테스트 데이터 자동 입력">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> 샘플 입력
+                </button>
+                <div class="text-right" id="progress-indicator-box">
+                    <span id="progress-text" class="text-xs sm:text-sm font-bold text-brand-600">0 / 25</span>
+                    <span class="text-xs text-slate-400 block sm:inline sm:ml-1">완료</span>
+                </div>
+            </div>
+        </div>
+        <!-- 프로그레스 바 -->
+        <div class="w-full h-1.5 bg-slate-100" id="progress-bar-wrapper">
+            <div id="progress-bar" class="h-full bg-gradient-to-r from-brand-600 to-accent-500 transition-all duration-300" style="width: 0%"></div>
+        </div>
+    </header>
+
+    <!-- 메인 컨테이너 -->
+    <main class="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10">
+
+        <!-- 인트로 카드 (진단 안내 및 척도 가이드) -->
+        <section id="intro-section" class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm mb-8 fade-in">
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-semibold mb-4">
+                <i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i> 사전 역량 진단
+            </div>
+            <h2 class="text-xl sm:text-2xl font-bold text-slate-900 mb-2">
+                고객은 목소리와 단어만으로<br class="sm:hidden"> 3초 만에 신뢰를 결정합니다
+            </h2>
+            <p class="text-sm sm:text-base text-slate-600 leading-relaxed mb-6">
+                평소 나의 전화상담 습관을 떠올리며 각 문항에 가장 가까운 점수를 선택해 주세요. 총점과 함께 <strong>3대 핵심 영역(청각·언어·구조화)</strong>별 강점과 오늘 집중해야 할 개선 포인트를 분석해 드립니다.
+            </p>
+
+            <!-- 참여자 이름 / 별명 입력 폼 -->
+            <div class="bg-brand-50/60 rounded-xl p-4 sm:p-5 border border-brand-200/80 mb-6">
+                <label for="participant-name" class="block text-sm font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
+                    <i data-lucide="user-check" class="w-4 h-4 text-brand-600"></i>
+                    <span>참여자 이름 또는 별명 <span class="text-rose-500">*</span></span>
+                </label>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <input type="text" id="participant-name" maxlength="20" placeholder="예: 김민수 또는 친절한상담사"
+                        class="sm:col-span-2 w-full bg-white border border-slate-300 focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20 rounded-xl px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition">
+                    <input type="text" id="participant-team" maxlength="20" placeholder="소속/팀 (선택)"
+                        class="w-full bg-white border border-slate-300 focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20 rounded-xl px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition">
+                </div>
+                <p id="name-error-msg" class="text-xs text-rose-600 font-medium mt-1.5 hidden flex items-center gap-1">
+                    <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> 진단을 시작하기 전에 이름 또는 별명을 입력해 주세요.
+                </p>
+            </div>
+
+            <!-- 척도 기준 안내 박스 -->
+            <div class="bg-slate-50 rounded-xl p-4 border border-slate-200/80">
+                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">응답 척도 기준 (1점 ~ 5점)</p>
+                <div class="grid grid-cols-5 gap-1.5 sm:gap-2 text-center">
+                    <div class="bg-white rounded-lg p-2 border border-slate-200/60">
+                        <span class="block font-bold text-brand-600 text-sm sm:text-base">1점</span>
+                        <span class="text-[11px] sm:text-xs text-slate-600 block mt-0.5">거의 안 함</span>
+                        <span class="text-[10px] text-slate-400 hidden sm:block">20% 미만</span>
+                    </div>
+                    <div class="bg-white rounded-lg p-2 border border-slate-200/60">
+                        <span class="block font-bold text-brand-600 text-sm sm:text-base">2점</span>
+                        <span class="text-[11px] sm:text-xs text-slate-600 block mt-0.5">가끔 함</span>
+                        <span class="text-[10px] text-slate-400 hidden sm:block">20~40%</span>
+                    </div>
+                    <div class="bg-white rounded-lg p-2 border border-slate-200/60">
+                        <span class="block font-bold text-brand-600 text-sm sm:text-base">3점</span>
+                        <span class="text-[11px] sm:text-xs text-slate-600 block mt-0.5">보통이다</span>
+                        <span class="text-[10px] text-slate-400 hidden sm:block">50% 내외</span>
+                    </div>
+                    <div class="bg-white rounded-lg p-2 border border-slate-200/60">
+                        <span class="block font-bold text-brand-600 text-sm sm:text-base">4점</span>
+                        <span class="text-[11px] sm:text-xs text-slate-600 block mt-0.5">자주 함</span>
+                        <span class="text-[10px] text-slate-400 hidden sm:block">70~80%</span>
+                    </div>
+                    <div class="bg-white rounded-lg p-2 border border-slate-200/60">
+                        <span class="block font-bold text-brand-600 text-sm sm:text-base">5점</span>
+                        <span class="text-[11px] sm:text-xs text-slate-600 block mt-0.5">항상 함</span>
+                        <span class="text-[10px] text-slate-400 hidden sm:block">90% 이상</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 설문 문항 영역 (JS로 동적 렌더링) -->
+        <form id="quiz-form" class="space-y-8">
+            <div id="questions-container" class="space-y-8"></div>
+
+            <!-- 제출 버튼 영역 -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm text-center">
+                <p id="validation-msg" class="text-sm text-rose-600 font-medium mb-3 hidden flex items-center justify-center gap-1.5">
+                    <i data-lucide="alert-circle" class="w-4 h-4"></i>
+                    <span>아직 응답하지 않은 문항이 있습니다. 해당 문항으로 이동합니다.</span>
+                </p>
+                <button type="button" onclick="calculateResult()" class="w-full sm:w-auto min-w-[260px] bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white font-bold text-base py-4 px-8 rounded-xl shadow-lg shadow-brand-600/20 transition flex items-center justify-center gap-2 mx-auto">
+                    <span>진단 결과 확인하기</span>
+                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+                <p class="text-xs text-slate-400 mt-3">모든 문항(25개) 응답 완료 후 결과를 확인할 수 있습니다.</p>
+            </div>
+        </form>
+
+        <!-- 결과 대시보드 섹션 (초기에는 숨김) -->
+        <section id="result-section" class="hidden fade-in space-y-6">
+            
+            <!-- 상단 종합 결과 카드 -->
+            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-md">
+                <div class="bg-gradient-to-r from-brand-800 via-brand-700 to-brand-600 p-6 sm:p-8 text-white">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm text-xs font-medium">
+                            <i data-lucide="award" class="w-3.5 h-3.5"></i> 진단 리포트
+                        </span>
+                        <span id="result-date" class="text-xs text-brand-100"></span>
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                        <div>
+                            <p class="text-brand-100 text-sm font-medium mb-1"><span id="result-participant-badge" class="font-bold text-white underline decoration-brand-300 underline-offset-4">참여자</span>님의 전화상담 신뢰 화법 유형</p>
+                            <h2 id="result-type-title" class="text-2xl sm:text-3xl font-bold tracking-tight">실무 안정형</h2>
+                        </div>
+                        <div class="bg-white/10 backdrop-blur-md rounded-xl px-5 py-3 border border-white/20 text-left sm:text-right">
+                            <span class="text-xs text-brand-100 block">종합 점수</span>
+                            <div class="flex items-baseline gap-1 sm:justify-end">
+                                <span id="total-score" class="text-3xl sm:text-4xl font-extrabold text-white">0</span>
+                                <span class="text-sm text-brand-200">/ 125점</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 유형별 상세 코멘트 -->
+                <div class="p-6 sm:p-8">
+                    <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2 mb-2">
+                        <i data-lucide="compass" class="w-4 h-4 text-brand-600"></i> 종합 분석 및 교육 코칭 포인트
+                    </h3>
+                    <p id="result-type-desc" class="text-sm sm:text-base text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    </p>
+                </div>
+            </div>
+
+            <!-- 3대 영역별 점수 비교 차트 & 분석 -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900">영역별 역량 밸런스 (5.0점 만점 환산)</h3>
+                        <p class="text-xs sm:text-sm text-slate-500">문항 수가 다른 3개 영역을 5점 척도 평균으로 환산해 비교합니다.</p>
+                    </div>
+                    <span id="weakest-badge" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold self-start sm:self-auto">
+                        <i data-lucide="target" class="w-3.5 h-3.5 text-amber-600"></i> 집중 보완: <span>-</span>
+                    </span>
+                </div>
+
+                <!-- 영역별 프로그레스 카드 3개 -->
+                <div id="domain-bars-container" class="space-y-5"></div>
+            </div>
+
+            <!-- 오늘 교육에서 집중 교정할 문항 TOP 3 -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+                <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2 mb-1">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-500"></i>
+                    <span>오늘 교육에서 집중 교정할 문항 TOP 3</span>
+                </h3>
+                <p class="text-xs sm:text-sm text-slate-500 mb-5">가장 낮은 점수를 선택한 3가지 습관입니다. 오늘 실습 시간에 이 문항들을 우선적으로 교정해 보세요.</p>
+                <div id="lowest-items-container" class="space-y-3"></div>
+            </div>
+
+            <!-- 하단 액션 버튼 (PDF 저장 / 결과 복사 / 다시 테스트) -->
+            <div class="no-print flex flex-col sm:flex-row gap-3 pt-2 pb-10">
+                <button type="button" onclick="saveReportAsPDF('personal')" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3.5 px-6 rounded-xl shadow-sm transition flex items-center justify-center gap-2">
+                    <i data-lucide="file-down" class="w-4 h-4"></i>
+                    <span>PDF로 저장</span>
+                </button>
+                <button type="button" onclick="copyResultSummary()" class="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3.5 px-6 rounded-xl shadow-sm transition flex items-center justify-center gap-2">
+                    <i data-lucide="copy" class="w-4 h-4"></i>
+                    <span id="copy-btn-text">결과 요약 복사하기</span>
+                </button>
+                <button type="button" onclick="resetQuiz()" class="sm:w-auto bg-white hover:bg-slate-50 text-slate-700 font-semibold py-3.5 px-6 rounded-xl border border-slate-300 transition flex items-center justify-center gap-2">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                    <span>다시 진단하기</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- 강사용 전체 평균 대시보드 섹션 (초기에는 숨김) -->
+        <section id="instructor-section" class="hidden fade-in space-y-6 pb-12">
+            <!-- 대시보드 헤더 -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+                    <div>
+                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-semibold mb-2">
+                            <i data-lucide="radio" class="w-3.5 h-3.5 text-emerald-600 animate-pulse"></i> 실시간 교육생 집계 현황
+                        </div>
+                        <h2 class="text-xl sm:text-2xl font-bold text-slate-900">전체 교육생 진단 평균 리포트</h2>
+                        <p class="text-xs sm:text-sm text-slate-500 mt-1">수강생이 진단을 완료하면 실시간으로 전체 평균과 영역별 통계가 업데이트됩니다.</p>
+                    </div>
+                    <div class="no-print flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                        <button type="button" onclick="saveReportAsPDF('instructor')" class="inline-flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-xl transition">
+                            <i data-lucide="file-down" class="w-4 h-4"></i> PDF 저장
+                        </button>
+                        <button type="button" onclick="toggleInstructorView()" class="inline-flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-xl transition">
+                            <i data-lucide="arrow-left" class="w-4 h-4"></i> 진단 화면으로 돌아가기
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 핵심 요약 KPI 4개 -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 pt-6">
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-200/70">
+                        <span class="text-xs font-medium text-slate-500 block mb-1">총 참여 인원</span>
+                        <div class="flex items-baseline gap-1">
+                            <span id="dash-total-count" class="text-2xl sm:text-3xl font-extrabold text-slate-900">0</span>
+                            <span class="text-xs text-slate-500">명</span>
+                        </div>
+                    </div>
+                    <div class="bg-brand-50/70 rounded-xl p-4 border border-brand-200/70">
+                        <span class="text-xs font-medium text-brand-700 block mb-1">전체 총점 평균</span>
+                        <div class="flex items-baseline gap-1">
+                            <span id="dash-avg-total" class="text-2xl sm:text-3xl font-extrabold text-brand-700">0.0</span>
+                            <span class="text-xs text-brand-500">/ 125점</span>
+                        </div>
+                    </div>
+                    <div class="bg-amber-50/70 rounded-xl p-4 border border-amber-200/70">
+                        <span class="text-xs font-medium text-amber-800 block mb-1">전체 최약점 영역</span>
+                        <span id="dash-weakest-domain" class="text-base sm:text-lg font-extrabold text-amber-700 block truncate mt-1">-</span>
+                    </div>
+                    <div class="bg-emerald-50/70 rounded-xl p-4 border border-emerald-200/70">
+                        <span class="text-xs font-medium text-emerald-800 block mb-1">전체 최강점 영역</span>
+                        <span id="dash-strongest-domain" class="text-base sm:text-lg font-extrabold text-emerald-700 block truncate mt-1">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 전체 영역별 평균 & 유형 분포 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- 영역별 전체 평균 (2컬럼) -->
+                <div class="md:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                    <h3 class="text-base font-bold text-slate-900 mb-1">영역별 전체 평균 (5.0점 만점 기준)</h3>
+                    <p class="text-xs text-slate-500 mb-5">교육생 전체의 영역별 평균 점수를 비교해 강의 시간 배분에 활용하세요.</p>
+                    <div id="dash-domain-bars" class="space-y-4">
+                        <p class="text-sm text-slate-400 text-center py-8">아직 제출된 진단 데이터가 없습니다.</p>
+                    </div>
+                </div>
+
+                <!-- 유형별 분포 (1컬럼) -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900 mb-1">상담 유형별 인원 분포</h3>
+                        <p class="text-xs text-slate-500 mb-5">총점 구간별 교육생 비율</p>
+                        <div id="dash-type-dist" class="space-y-3.5">
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                                    <span>신뢰 마스터형 (100~125)</span>
+                                    <span id="dist-master-count">0명 (0%)</span>
+                                </div>
+                                <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                                    <div id="dist-master-bar" class="h-full bg-emerald-500 rounded-full" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                                    <span>실무 안정형 (70~99)</span>
+                                    <span id="dist-steady-count">0명 (0%)</span>
+                                </div>
+                                <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                                    <div id="dist-steady-bar" class="h-full bg-brand-600 rounded-full" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                                    <span>기초 정비형 (25~69)</span>
+                                    <span id="dist-starter-count">0명 (0%)</span>
+                                </div>
+                                <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                                    <div id="dist-starter-bar" class="h-full bg-amber-500 rounded-full" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="no-print mt-6 pt-4 border-t border-slate-100">
+                        <button type="button" onclick="copyDashboardSummary()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5">
+                            <i data-lucide="copy" class="w-3.5 h-3.5"></i> 전체 평균 리포트 복사
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 참여자별 상세 결과 테이블 -->
+            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                <div class="px-6 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">참여자별 진단 현황</h3>
+                        <p class="text-xs text-slate-500">최근 제출순으로 정렬됩니다.</p>
+                    </div>
+                    <button type="button" onclick="openClearModal()" class="no-print text-xs font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> 집계 데이터 초기화
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase">
+                                <th class="py-3 px-4">이름(별명)</th>
+                                <th class="py-3 px-3 text-center">총점</th>
+                                <th class="py-3 px-3 text-center">청각</th>
+                                <th class="py-3 px-3 text-center">언어</th>
+                                <th class="py-3 px-3 text-center">구조화</th>
+                                <th class="py-3 px-4">집중 보완 영역</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dash-participants-tbody" class="divide-y divide-slate-100 text-sm">
+                            <tr>
+                                <td colspan="6" class="py-10 text-center text-slate-400 text-xs">
+                                    아직 제출된 진단 결과가 없습니다. 교육생이 진단을 완료하면 이곳에 표시됩니다.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 데이터 초기화 확인 모달 (confirm() 대체용 커스텀 모달) -->
+    <div id="clear-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200">
+            <div class="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mb-4">
+                <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-1">집계 데이터를 초기화할까요?</h3>
+            <p class="text-sm text-slate-600 mb-6">현재까지 저장된 모든 참여자의 진단 기록이 삭제되며 복구할 수 없습니다.</p>
+            <div class="flex gap-2.5">
+                <button type="button" onclick="closeClearModal()" class="flex-1 py-2.5 px-4 rounded-xl border border-slate-300 text-slate-700 text-sm font-semibold hover:bg-slate-50 transition">취소</button>
+                <button type="button" onclick="confirmClearAllData()" class="flex-1 py-2.5 px-4 rounded-xl bg-rose-600 text-white text-sm font-semibold hover:bg-rose-700 transition">전체 삭제</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 토스트 알림 메시지 박스 -->
+    <div id="toast-box" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-sm font-medium px-5 py-3 rounded-full shadow-xl opacity-0 pointer-events-none transition-opacity duration-300 flex items-center gap-2">
+        <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+        <span id="toast-message">복사되었습니다.</span>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase 실시간 집계 초기화 (교육생 다중 접속 평균 계산용)
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'voice-trust-diagnosis-app';
+        window.allSubmissions = [];
+
+        async function initRealtimeStorage() {
+            try {
+                if (typeof __firebase_config === 'undefined') return;
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    currentUser = user;
+                    if (user && db) {
+                        subscribeToSubmissions();
+                    }
+                });
+            } catch (e) {
+                console.error("Realtime storage init error:", e);
+            }
+        }
+
+        function subscribeToSubmissions() {
+            if (!currentUser || !db) return;
+            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'voice_diagnosis_results');
+            onSnapshot(colRef, (snapshot) => {
+                const list = [];
+                snapshot.forEach((docSnap) => {
+                    list.push({ id: docSnap.id, ...docSnap.data() });
+                });
+                // 최신순 정렬
+                list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                window.allSubmissions = list;
+                if (typeof window.renderInstructorDashboard === 'function') {
+                    window.renderInstructorDashboard();
+                }
+            }, (err) => {
+                console.error("Snapshot listener error:", err);
+            });
+        }
+
+        window.saveSubmissionToCloud = async function(record) {
+            // 로컬 상태에도 즉시 반영 (오프라인/미리보기 환경 대비)
+            window.allSubmissions = [record, ...window.allSubmissions];
+            if (typeof window.renderInstructorDashboard === 'function') {
+                window.renderInstructorDashboard();
+            }
+
+            if (!currentUser || !db) return;
+            try {
+                const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'voice_diagnosis_results');
+                await addDoc(colRef, record);
+            } catch (err) {
+                console.error("Save submission error:", err);
+            }
+        };
+
+        window.deleteAllCloudSubmissions = async function() {
+            const items = [...window.allSubmissions];
+            window.allSubmissions = [];
+            if (typeof window.renderInstructorDashboard === 'function') {
+                window.renderInstructorDashboard();
+            }
+            if (!currentUser || !db) return;
+            try {
+                for (const item of items) {
+                    if (item.id) {
+                        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'voice_diagnosis_results', item.id));
+                    }
+                }
+            } catch (err) {
+                console.error("Delete submissions error:", err);
+            }
+        };
+
+        initRealtimeStorage();
+    </script>
+
+    <script>
+        // 1. 진단 데이터 구조 정의 (총 25문항)
+        const quizData = [
+            {
+                id: 'voice',
+                title: '영역 1. 청각적 신뢰',
+                subtitle: '목소리 · 톤 · 속도 · 여백 (8문항)',
+                icon: 'volume-2',
+                color: 'blue',
+                tip: '핵심 숫자나 조건 안내 직전 0.5초 멈춤(Pause)을 주고, 문장 끝을 명확히 닫는 연습을 해보세요.',
+                questions: [
+                    "통화 시작 첫인사(환영·소속 안내)에서 밝고 따뜻한 톤을 유지하고, 본론 설명 시에는 차분하고 안정된 톤으로 조절한다.",
+                    "중요한 숫자(금액, 날짜, 시간, 조건)나 핵심 안내를 말하기 직전에 0.5초 정도 호흡을 고르며 말의 속도를 늦춘다.",
+                    "문장 끝을 흐리거나('~요?', '~거든요') 말꼬리를 낮추지 않고, 명확하고 단정하게 마무리한다.",
+                    "통화 중 당황하거나 난처한 질문을 받아도 목소리가 빨라지거나 높아지지 않고 평소 페이스를 유지한다.",
+                    "고객의 기분이 상해 보이거나 긴장한 상황일 때, 맞장구치듯 덩달아 흥분하지 않고 한 톤 낮춘 차분한 음성으로 안정감을 준다.",
+                    "전화기 너머로 숨소리, 한숨, 키보드 소리, 종이 넘기는 소리 등 불필요한 소음이 들리지 않도록 자세와 주변 환경을 관리한다.",
+                    "상대가 잘 알아듣기 쉽도록 발음을 뭉개지 않고 자음·모음을 또박또박 발음한다.",
+                    "설명이 길어질 때 숨이 차거나 단조로워지지 않도록 적절한 호흡과 억양 변화를 준다."
+                ]
+            },
+            {
+                id: 'language',
+                title: '영역 2. 언어적 신뢰',
+                subtitle: '쿠션어 · 긍정 전환 · 공감 · 명확성 (9문항)',
+                icon: 'message-square-heart',
+                color: 'teal',
+                tip: "'안 됩니다' 대신 '가능한 대안'을 먼저 제시하고, 요청 앞에는 반드시 쿠션 언어를 붙여보세요.",
+                questions: [
+                    "거절, 확인 요청, 추가 질문 등 고객의 부담이나 방어심을 유발할 수 있는 말 앞에는 쿠션 언어('번거로우시겠지만', '확인해 주셔서 감사합니다만')를 자연스럽게 사용한다.",
+                    "불가능하거나 제한되는 사항을 안내할 때 '안 됩니다', '어렵습니다' 대신, 가능한 대안이나 다음 단계를 중심으로 긍정 전환하여 말한다.",
+                    "고객이 불만이나 답답함을 표현할 때, 해결책부터 내놓기보다 고객의 감정과 상황을 먼저 공감·수용하는 표현을 사용한다.",
+                    "'그냥', '대충', '아마', '글쎄요'처럼 모호하거나 불확실성을 주는 구어체 표현 대신 명확하고 책임감 있는 단어를 선택한다.",
+                    "사내 용어나 약어, 전문 용어를 무심코 쓰지 않고 고객의 눈높이에 맞춘 쉬운 말로 풀어서 설명한다.",
+                    "고객에게 무언가를 부탁하거나 안내할 때 명령조('~하셔야 합니다', '~하세요')보다 정중하고 협력적인 표현('~해 주시면 감사하겠습니다', '~확인해 보실 수 있습니다')을 사용한다.",
+                    "실수나 지연이 발생했을 때 변명하거나 책임을 돌리기보다, 사실을 깔끔하게 인정하고 사과한 뒤 해결 방안을 제시한다.",
+                    "고객의 감정이 격앙되어 있더라도 감정적 맞대응을 하지 않고, 감정 공감과 사실·규정 안내를 분리하여 차분히 말한다.",
+                    "통화 중 고객의 이름이나 호칭을 예의 바르고 자연스럽게 사용하여 '나를 맞춤 응대해 주고 있다'는 느낌을 준다."
+                ]
+            },
+            {
+                id: 'structure',
+                title: '영역 3. 경청 및 구조화',
+                subtitle: '경청 · 요약 확인 · PREP · 마무리 (8문항)',
+                icon: 'layers',
+                color: 'indigo',
+                tip: "고객 말을 들은 뒤 '정리해 드리면 ~이시죠?'로 재확인하고, 결론(Point)부터 안내하는 연습을 해보세요.",
+                questions: [
+                    "고객이 말하는 도중에 성급하게 끼어들거나 내 생각을 먼저 말하지 않고, 핵심 요지가 나올 때까지 충분히 듣는다.",
+                    "고객의 문의나 요구사항을 들은 뒤 '말씀하신 내용을 정리해 드리면 ~라는 말씀이시죠?'처럼 내 말로 요약·재확인한다.",
+                    "복잡한 절차나 기준을 설명할 때 두서없이 나열하지 않고, 결론(핵심)을 먼저 말한 뒤 이유와 세부 사항을 순서대로 안내한다.",
+                    "한 번에 너무 많은 정보를 쏟아내지 않고, 2~3가지 핵심 포인트로 끊어 안내하며 중간중간 이해 여부를 확인한다.",
+                    "고객의 질문 의도가 불명확할 때 추측으로 답하지 않고, 핵심을 좁혀주는 질문을 정중히 던져 정확히 파악한다.",
+                    "통화 도중 확인이나 조회가 필요할 때 고객을 무작정 기다리게 하지 않고, 예상 소요 시간과 진행 상황을 먼저 안내한다.",
+                    "통화를 마치기 전 고객이 궁금해할 만한 후속 조치, 일정, 담당자 안내 등을 빠짐없이 짚어준다.",
+                    "마지막 인사 전에 추가 문의나 불편한 점이 없는지 확인하고, 기분 좋은 여운이 남도록 정중하게 통화를 마무리한다."
+                ]
+            }
+        ];
+
+        const scaleLabels = [
+            { score: 1, short: '거의 안 함' },
+            { score: 2, short: '가끔 함' },
+            { score: 3, short: '보통' },
+            { score: 4, short: '자주 함' },
+            { score: 5, short: '항상 함' }
+        ];
+
+        let flatQuestions = [];
+
+        // 2. 초기 렌더링 함수
+        function renderQuestions() {
+            const container = document.getElementById('questions-container');
+            container.innerHTML = '';
+            flatQuestions = [];
+            let qNumber = 1;
+
+            quizData.forEach((domain) => {
+                // 영역 섹션 카드 생성
+                const sectionEl = document.createElement('div');
+                sectionEl.className = 'bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm';
+                
+                // 영역 헤더
+                const headerHtml = `
+                    <div class="bg-slate-50/90 border-b border-slate-200 px-5 sm:px-7 py-4 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center">
+                                <i data-lucide="${domain.icon}" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-base sm:text-lg">${domain.title}</h3>
+                                <p class="text-xs text-slate-500">${domain.subtitle}</p>
+                            </div>
+                        </div>
+                        <span id="domain-badge-${domain.id}" class="text-xs font-semibold px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-500">
+                            0 / ${domain.questions.length}
+                        </span>
+                    </div>
+                `;
+
+                // 문항 리스트 컨테이너
+                const listEl = document.createElement('div');
+                listEl.className = 'divide-y divide-slate-100';
+
+                domain.questions.forEach((qText) => {
+                    const currentNum = qNumber++;
+                    flatQuestions.push({
+                        num: currentNum,
+                        domainId: domain.id,
+                        domainTitle: domain.title,
+                        text: qText
+                    });
+
+                    const itemEl = document.createElement('div');
+                    itemEl.id = `q-card-${currentNum}`;
+                    itemEl.className = 'p-5 sm:px-7 sm:py-6 transition-colors duration-200 hover:bg-slate-50/50';
+
+                    // 라디오 버튼 1~5 생성
+                    const optionsHtml = scaleLabels.map(opt => `
+                        <label class="cursor-pointer flex-1">
+                            <input type="radio" name="q_${currentNum}" value="${opt.score}" 
+                                class="sr-only radio-btn-input" 
+                                onchange="handleAnswerChange(${currentNum}, '${domain.id}')">
+                            <div class="radio-btn-label border border-slate-200 bg-white hover:border-brand-300 hover:bg-brand-50/40 rounded-xl py-2.5 px-1 text-center select-none">
+                                <span class="block text-sm sm:text-base font-bold">${opt.score}</span>
+                                <span class="block text-[10px] sm:text-[11px] opacity-80 mt-0.5 truncate">${opt.short}</span>
+                            </div>
+                        </label>
+                    `).join('');
+
+                    itemEl.innerHTML = `
+                        <div class="flex items-start gap-3 mb-4">
+                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-600 font-bold text-xs shrink-0 mt-0.5" id="q-num-badge-${currentNum}">
+                                ${currentNum}
+                            </span>
+                            <p class="text-sm sm:text-[15px] font-medium text-slate-800 leading-relaxed">
+                                ${qText}
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-1.5 sm:gap-2.5 pl-0 sm:pl-9">
+                            ${optionsHtml}
+                        </div>
+                    `;
+                    listEl.appendChild(itemEl);
+                });
+
+                sectionEl.innerHTML = headerHtml;
+                sectionEl.appendChild(listEl);
+                container.appendChild(sectionEl);
+            });
+
+            lucide.createIcons();
+        }
+
+        // 3. 응답 선택 시 진행률 업데이트
+        function handleAnswerChange(qNum, domainId) {
+            // 문항 번호 뱃지 색상 변경 (완료 표시)
+            const badge = document.getElementById(`q-num-badge-${qNum}`);
+            if (badge) {
+                badge.classList.remove('bg-slate-100', 'text-slate-600');
+                badge.classList.add('bg-brand-600', 'text-white');
+            }
+
+            // 경고 하이라이트 제거
+            const card = document.getElementById(`q-card-${qNum}`);
+            if (card) {
+                card.classList.remove('bg-rose-50/70');
+            }
+
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const total = flatQuestions.length;
+            let answered = 0;
+
+            // 영역별 카운트
+            const domainCounts = { voice: 0, language: 0, structure: 0 };
+
+            flatQuestions.forEach(q => {
+                const checked = document.querySelector(`input[name="q_${q.num}"]:checked`);
+                if (checked) {
+                    answered++;
+                    domainCounts[q.domainId]++;
+                }
+            });
+
+            // 상단 프로그레스 바 갱신
+            const pct = Math.round((answered / total) * 100);
+            document.getElementById('progress-bar').style.width = `${pct}%`;
+            document.getElementById('progress-text').textContent = `${answered} / ${total}`;
+
+            // 영역별 뱃지 갱신
+            quizData.forEach(d => {
+                const badgeEl = document.getElementById(`domain-badge-${d.id}`);
+                const count = domainCounts[d.id];
+                const max = d.questions.length;
+                badgeEl.textContent = `${count} / ${max}`;
+                if (count === max) {
+                    badgeEl.className = 'text-xs font-bold px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700';
+                }
+            });
+
+            if (answered === total) {
+                document.getElementById('validation-msg').classList.add('hidden');
+            }
+        }
+
+        // 4. 결과 계산 및 리포트 렌더링
+        function calculateResult() {
+            // 이름/별명 유효성 확인
+            const nameInput = document.getElementById('participant-name');
+            const teamInput = document.getElementById('participant-team');
+            const nameError = document.getElementById('name-error-msg');
+            const participantName = nameInput.value.trim();
+            const participantTeam = teamInput.value.trim();
+
+            if (!participantName) {
+                nameError.classList.remove('hidden');
+                nameInput.classList.add('border-rose-500', 'ring-2', 'ring-rose-500/20');
+                nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                nameInput.focus();
+                return;
+            } else {
+                nameError.classList.add('hidden');
+                nameInput.classList.remove('border-rose-500', 'ring-2', 'ring-rose-500/20');
+            }
+
+            let unansweredFirst = null;
+            const scores = [];
+
+            for (const q of flatQuestions) {
+                const checked = document.querySelector(`input[name="q_${q.num}"]:checked`);
+                if (!checked) {
+                    if (!unansweredFirst) unansweredFirst = q.num;
+                } else {
+                    scores.push({
+                        ...q,
+                        score: parseInt(checked.value, 10)
+                    });
+                }
+            }
+
+            // 미응답 문항이 있을 경우 해당 문항으로 스크롤
+            if (unansweredFirst !== null) {
+                const msgEl = document.getElementById('validation-msg');
+                msgEl.classList.remove('hidden');
+                
+                const targetCard = document.getElementById(`q-card-${unansweredFirst}`);
+                targetCard.classList.add('bg-rose-50/70');
+                targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+
+            // 총점 계산
+            const totalScore = scores.reduce((sum, item) => sum + item.score, 0);
+
+            // 유형 판별 (25~125점)
+            let typeTitle = '';
+            let typeDesc = '';
+            if (totalScore >= 100) {
+                typeTitle = '신뢰 마스터형 (Trust Master)';
+                typeDesc = '기본적인 전화 응대 역량과 신뢰 형성 습관이 매우 탄탄합니다. 청각적 안정감과 언어적 배려가 균형을 이루고 있으므로, 오늘 교육에서는 까다로운 민원이나 감정 격앙 고객을 상대할 때의 "경계 설정 화법"과 "고급 설득 기법"을 심화 적용하는 데 집중해 보세요.';
+            } else if (totalScore >= 70) {
+                typeTitle = '실무 안정형 (Steady Practitioner)';
+                typeDesc = '전반적인 상담 흐름은 안정적이나, 특정 상황(거절 안내, 핵심 요약, 말의 속도 조절 등)에서 습관적인 편차가 나타나는 단계입니다. 아래 영역별 점수 중 가장 낮게 나온 1개 영역을 오늘의 핵심 교정 목표로 설정하면 한 단계 높은 전문가로 도약할 수 있습니다.';
+            } else {
+                typeTitle = '기초 정비형 (Growth Starter)';
+                typeDesc = '빠른 말투, 무의식적인 부정어 사용, 두서없는 설명 등 작은 습관들이 고객의 신뢰를 깎아먹고 있을 가능성이 높습니다. 한 번에 모든 것을 바꾸려 하기보다 오늘 배울 "핵심 안내 전 0.5초 멈춤"과 "긍정 전환 1문장 바꾸기"부터 즉시 현업에 적용해 보세요.';
+            }
+
+            // 영역별 통계 계산
+            const domainResults = quizData.map(d => {
+                const domainItems = scores.filter(s => s.domainId === d.id);
+                const sum = domainItems.reduce((acc, cur) => acc + cur.score, 0);
+                const maxScore = d.questions.length * 5;
+                const avg = (sum / d.questions.length).toFixed(2);
+                return {
+                    ...d,
+                    sum,
+                    maxScore,
+                    avg: parseFloat(avg)
+                };
+            });
+
+            // 가장 취약한 영역 찾기 (평균 기준 오름차순)
+            const sortedDomains = [...domainResults].sort((a, b) => a.avg - b.avg);
+            const weakestDomain = sortedDomains[0];
+
+            // 가장 낮은 점수 문항 TOP 3 추출
+            const lowestItems = [...scores]
+                .sort((a, b) => a.score - b.score || a.num - b.num)
+                .slice(0, 3);
+
+            // UI 업데이트
+            const now = new Date();
+            const displayLabel = participantTeam ? `${participantName} (${participantTeam})` : participantName;
+            document.getElementById('result-participant-badge').textContent = displayLabel;
+            document.getElementById('result-date').textContent = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} 진단 완료`;
+            document.getElementById('result-type-title').textContent = typeTitle;
+            document.getElementById('total-score').textContent = totalScore;
+            document.getElementById('result-type-desc').textContent = typeDesc;
+            document.getElementById('weakest-badge').querySelector('span').textContent = weakestDomain.title.split('. ')[1];
+
+            // 영역별 막대 그래프 렌더링
+            const barsContainer = document.getElementById('domain-bars-container');
+            barsContainer.innerHTML = domainResults.map(d => {
+                const pct = Math.round((d.avg / 5) * 100);
+                const isWeakest = d.id === weakestDomain.id;
+                const barColor = isWeakest ? 'bg-amber-500' : 'bg-brand-600';
+                const badgeTag = isWeakest 
+                    ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800 ml-2">집중 보완 필요</span>` 
+                    : '';
+
+                return `
+                    <div class="p-4 rounded-xl border ${isWeakest ? 'border-amber-200 bg-amber-50/30' : 'border-slate-100 bg-slate-50/50'}">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                            <div class="flex items-center">
+                                <span class="font-bold text-slate-800 text-sm sm:text-base">${d.title}</span>
+                                ${badgeTag}
+                            </div>
+                            <div class="text-right">
+                                <span class="text-base sm:text-lg font-extrabold ${isWeakest ? 'text-amber-600' : 'text-brand-600'}">${d.avg.toFixed(1)}</span>
+                                <span class="text-xs text-slate-400"> / 5.0점 (${d.sum}/${d.maxScore}점)</span>
+                            </div>
+                        </div>
+                        <div class="w-full h-2.5 bg-slate-200/80 rounded-full overflow-hidden mb-2.5">
+                            <div class="h-full ${barColor} rounded-full transition-all duration-700" style="width: ${pct}%"></div>
+                        </div>
+                        <p class="text-xs text-slate-600 flex items-start gap-1.5">
+                            <i data-lucide="lightbulb" class="w-3.5 h-3.5 text-brand-500 shrink-0 mt-0.5"></i>
+                            <span>${d.tip}</span>
+                        </p>
+                    </div>
+                `;
+            }).join('');
+
+            // 취약 문항 TOP 3 렌더링
+            const lowestContainer = document.getElementById('lowest-items-container');
+            lowestContainer.innerHTML = lowestItems.map((item, idx) => `
+                <div class="flex items-start gap-3.5 p-4 rounded-xl bg-slate-50 border border-slate-200/70">
+                    <div class="w-7 h-7 rounded-lg bg-rose-100 text-rose-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                        ${item.score}점
+                    </div>
+                    <div class="flex-1">
+                        <span class="text-[11px] font-semibold text-slate-400 block mb-0.5">${item.domainTitle} · ${item.num}번 문항</span>
+                        <p class="text-sm text-slate-800 font-medium leading-snug">${item.text}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            // 화면 전환 (폼 숨기고 결과 표시)
+            document.getElementById('intro-section').classList.add('hidden');
+            document.getElementById('quiz-form').classList.add('hidden');
+            const resultSec = document.getElementById('result-section');
+            resultSec.classList.remove('hidden');
+            
+            lucide.createIcons();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // 클라우드(강사 대시보드 집계용)에 결과 저장
+            if (typeof window.saveSubmissionToCloud === 'function') {
+                window.saveSubmissionToCloud({
+                    name: participantName,
+                    team: participantTeam,
+                    totalScore: totalScore,
+                    typeTitle: typeTitle,
+                    voiceAvg: domainResults[0].avg,
+                    languageAvg: domainResults[1].avg,
+                    structureAvg: domainResults[2].avg,
+                    weakestDomain: weakestDomain.title.split('. ')[1],
+                    createdAt: Date.now()
+                });
+            }
+
+            // 복사용 텍스트 전역 저장
+            window.latestSummaryText = `[전화상담 신뢰도 자가진단 결과 - ${displayLabel}]\n• 총점: ${totalScore}점 / 125점 (${typeTitle})\n• 청각적 신뢰: ${domainResults[0].avg.toFixed(1)}점 / 5.0\n• 언어적 신뢰: ${domainResults[1].avg.toFixed(1)}점 / 5.0\n• 경청 및 구조화: ${domainResults[2].avg.toFixed(1)}점 / 5.0\n• 오늘의 집중 보완 영역: ${weakestDomain.title}`;
+        }
+
+        // 5. 결과 요약 클립보드 복사 (iFrame 호환 execCommand 사용)
+        function copyResultSummary() {
+            if (!window.latestSummaryText) return;
+            
+            const textArea = document.createElement('textarea');
+            textArea.value = window.latestSummaryText;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-9999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showToast('진단 결과가 복사되었습니다! 채팅창에 붙여넣기 해주세요.');
+            } catch (err) {
+                showToast('복사에 실패했습니다. 화면을 캡처해 주세요.');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        // 6. 다시 진단하기 초기화
+        function resetQuiz() {
+            document.getElementById('quiz-form').reset();
+            
+            // 모든 문항 뱃지 초기화
+            flatQuestions.forEach(q => {
+                const badge = document.getElementById(`q-num-badge-${q.num}`);
+                if (badge) {
+                    badge.classList.remove('bg-brand-600', 'text-white');
+                    badge.classList.add('bg-slate-100', 'text-slate-600');
+                }
+            });
+
+            // 영역 뱃지 초기화
+            quizData.forEach(d => {
+                const badgeEl = document.getElementById(`domain-badge-${d.id}`);
+                badgeEl.textContent = `0 / ${d.questions.length}`;
+                badgeEl.className = 'text-xs font-semibold px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-500';
+            });
+
+            updateProgress();
+
+            document.getElementById('result-section').classList.add('hidden');
+            document.getElementById('intro-section').classList.remove('hidden');
+            document.getElementById('quiz-form').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 7. 강사용 데모 데이터 자동 입력 (테스트 편의 기능)
+        function fillDemoAnswers() {
+            const nameInput = document.getElementById('participant-name');
+            if (!nameInput.value.trim()) {
+                const demoNames = ['김지현', '박서준', '이수민', '최현우', '정다은'];
+                nameInput.value = demoNames[Math.floor(Math.random() * demoNames.length)];
+            }
+            const sampleScores = [4,3,4,3,4,5,4,3, 3,2,4,3,4,3,4,3,4, 4,2,3,3,4,4,4,5];
+            flatQuestions.forEach((q, idx) => {
+                const val = sampleScores[idx] || 3;
+                const radio = document.querySelector(`input[name="q_${q.num}"][value="${val}"]`);
+                if (radio) {
+                    radio.checked = true;
+                    handleAnswerChange(q.num, q.domainId);
+                }
+            });
+            showToast('샘플 이름과 응답(25문항)이 입력되었습니다.');
+        }
+
+        // 8. 강사 대시보드 화면 전환 및 렌더링
+        let isInstructorView = false;
+        function toggleInstructorView() {
+            isInstructorView = !isInstructorView;
+            const navBtn = document.getElementById('instructor-nav-btn');
+            const introSec = document.getElementById('intro-section');
+            const quizForm = document.getElementById('quiz-form');
+            const resultSec = document.getElementById('result-section');
+            const instructorSec = document.getElementById('instructor-section');
+            const progBox = document.getElementById('progress-indicator-box');
+            const progBar = document.getElementById('progress-bar-wrapper');
+
+            if (isInstructorView) {
+                introSec.classList.add('hidden');
+                quizForm.classList.add('hidden');
+                resultSec.classList.add('hidden');
+                instructorSec.classList.remove('hidden');
+                progBox.classList.add('hidden');
+                progBar.classList.add('hidden');
+                navBtn.innerHTML = `<i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i><span>진단지로 이동</span>`;
+                renderInstructorDashboard();
+            } else {
+                instructorSec.classList.add('hidden');
+                progBox.classList.remove('hidden');
+                progBar.classList.remove('hidden');
+                // 결과가 이미 나와 있으면 결과 화면, 아니면 인트로+폼 화면으로 복귀
+                if (window.latestSummaryText && document.getElementById('total-score').textContent !== '0') {
+                    resultSec.classList.remove('hidden');
+                } else {
+                    introSec.classList.remove('hidden');
+                    quizForm.classList.remove('hidden');
+                }
+                navBtn.innerHTML = `<i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i><span>강사 대시보드</span>`;
+            }
+            lucide.createIcons();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        window.renderInstructorDashboard = function() {
+            const list = window.allSubmissions || [];
+            const count = list.length;
+
+            document.getElementById('dash-total-count').textContent = count;
+
+            if (count === 0) {
+                document.getElementById('dash-avg-total').textContent = '0.0';
+                document.getElementById('dash-weakest-domain').textContent = '-';
+                document.getElementById('dash-strongest-domain').textContent = '-';
+                document.getElementById('dash-domain-bars').innerHTML = `<p class="text-sm text-slate-400 text-center py-8">아직 제출된 진단 데이터가 없습니다.</p>`;
+                document.getElementById('dist-master-count').textContent = '0명 (0%)';
+                document.getElementById('dist-master-bar').style.width = '0%';
+                document.getElementById('dist-steady-count').textContent = '0명 (0%)';
+                document.getElementById('dist-steady-bar').style.width = '0%';
+                document.getElementById('dist-starter-count').textContent = '0명 (0%)';
+                document.getElementById('dist-starter-bar').style.width = '0%';
+                document.getElementById('dash-participants-tbody').innerHTML = `
+                    <tr>
+                        <td colspan="6" class="py-10 text-center text-slate-400 text-xs">
+                            아직 제출된 진단 결과가 없습니다. 교육생이 진단을 완료하면 이곳에 표시됩니다.
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            // 평균 계산
+            const avgTotal = (list.reduce((s, x) => s + Number(x.totalScore || 0), 0) / count).toFixed(1);
+            const avgVoice = (list.reduce((s, x) => s + Number(x.voiceAvg || 0), 0) / count).toFixed(2);
+            const avgLang = (list.reduce((s, x) => s + Number(x.languageAvg || 0), 0) / count).toFixed(2);
+            const avgStruct = (list.reduce((s, x) => s + Number(x.structureAvg || 0), 0) / count).toFixed(2);
+
+            document.getElementById('dash-avg-total').textContent = avgTotal;
+
+            const domains = [
+                { label: '청각적 신뢰 (목소리·톤·속도)', short: '청각적 신뢰', avg: parseFloat(avgVoice) },
+                { label: '언어적 신뢰 (쿠션어·긍정 전환)', short: '언어적 신뢰', avg: parseFloat(avgLang) },
+                { label: '경청 및 구조화 (요약·PREP)', short: '경청 및 구조화', avg: parseFloat(avgStruct) }
+            ];
+            const sorted = [...domains].sort((a, b) => a.avg - b.avg);
+            const weakest = sorted[0];
+            const strongest = sorted[sorted.length - 1];
+
+            document.getElementById('dash-weakest-domain').textContent = `${weakest.short} (${weakest.avg.toFixed(1)})`;
+            document.getElementById('dash-strongest-domain').textContent = `${strongest.short} (${strongest.avg.toFixed(1)})`;
+
+            // 영역별 막대 렌더링
+            document.getElementById('dash-domain-bars').innerHTML = domains.map(d => {
+                const pct = Math.round((d.avg / 5) * 100);
+                const isWeak = d.short === weakest.short;
+                return `
+                    <div>
+                        <div class="flex justify-between items-center text-xs sm:text-sm mb-1.5">
+                            <span class="font-bold text-slate-800">${d.label} ${isWeak ? '<span class="ml-1.5 text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">전체 최저</span>' : ''}</span>
+                            <span class="font-extrabold ${isWeak ? 'text-amber-600' : 'text-brand-600'}">${d.avg.toFixed(2)} <span class="text-slate-400 font-normal">/ 5.0</span></span>
+                        </div>
+                        <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+                            <div class="h-full ${isWeak ? 'bg-amber-500' : 'bg-brand-600'} rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // 유형별 분포 계산
+            const masterCnt = list.filter(x => x.totalScore >= 100).length;
+            const steadyCnt = list.filter(x => x.totalScore >= 70 && x.totalScore < 100).length;
+            const starterCnt = list.filter(x => x.totalScore < 70).length;
+
+            const masterPct = Math.round((masterCnt / count) * 100);
+            const steadyPct = Math.round((steadyCnt / count) * 100);
+            const starterPct = Math.round((starterCnt / count) * 100);
+
+            document.getElementById('dist-master-count').textContent = `${masterCnt}명 (${masterPct}%)`;
+            document.getElementById('dist-master-bar').style.width = `${masterPct}%`;
+            document.getElementById('dist-steady-count').textContent = `${steadyCnt}명 (${steadyPct}%)`;
+            document.getElementById('dist-steady-bar').style.width = `${steadyPct}%`;
+            document.getElementById('dist-starter-count').textContent = `${starterCnt}명 (${starterPct}%)`;
+            document.getElementById('dist-starter-bar').style.width = `${starterPct}%`;
+
+            // 참여자 테이블 렌더링
+            document.getElementById('dash-participants-tbody').innerHTML = list.map(item => `
+                <tr class="hover:bg-slate-50/70 transition">
+                    <td class="py-3 px-4 font-semibold text-slate-900">
+                        ${escapeHtml(item.name || '익명')}
+                        ${item.team ? `<span class="block text-[11px] font-normal text-slate-400">${escapeHtml(item.team)}</span>` : ''}
+                    </td>
+                    <td class="py-3 px-3 text-center font-extrabold text-brand-700">${item.totalScore}점</td>
+                    <td class="py-3 px-3 text-center text-slate-600">${Number(item.voiceAvg).toFixed(1)}</td>
+                    <td class="py-3 px-3 text-center text-slate-600">${Number(item.languageAvg).toFixed(1)}</td>
+                    <td class="py-3 px-3 text-center text-slate-600">${Number(item.structureAvg).toFixed(1)}</td>
+                    <td class="py-3 px-4">
+                        <span class="inline-block text-xs font-medium px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200/60">
+                            ${escapeHtml(item.weakestDomain || '-')}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+
+            window.latestDashboardSummary = `[전화상담 신뢰도 교육 - 전체 평균 리포트]\n• 참여 인원: ${count}명\n• 전체 총점 평균: ${avgTotal}점 / 125점\n• 청각적 신뢰 평균: ${Number(avgVoice).toFixed(1)}점 / 5.0\n• 언어적 신뢰 평균: ${Number(avgLang).toFixed(1)}점 / 5.0\n• 경청 및 구조화 평균: ${Number(avgStruct).toFixed(1)}점 / 5.0\n• 전체 집중 보완 영역: ${weakest.short}`;
+        };
+
+        function copyDashboardSummary() {
+            if (!window.latestDashboardSummary) {
+                showToast('복사할 집계 데이터가 아직 없습니다.');
+                return;
+            }
+            const textArea = document.createElement('textarea');
+            textArea.value = window.latestDashboardSummary;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-9999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast('전체 평균 리포트가 클립보드에 복사되었습니다.');
+            } catch (err) {
+                showToast('복사에 실패했습니다.');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function openClearModal() {
+            const modal = document.getElementById('clear-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeClearModal() {
+            const modal = document.getElementById('clear-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        async function confirmClearAllData() {
+            closeClearModal();
+            if (typeof window.deleteAllCloudSubmissions === 'function') {
+                await window.deleteAllCloudSubmissions();
+            }
+            showToast('전체 집계 데이터가 초기화되었습니다.');
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        // 토스트 알림 함수
+        function showToast(msg) {
+            const toast = document.getElementById('toast-box');
+            document.getElementById('toast-message').textContent = msg;
+            toast.classList.remove('opacity-0');
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+            }, 3000);
+        }
+
+        // PDF 저장(인쇄 대화상자) 실행 함수
+        function saveReportAsPDF(mode) {
+            const originalTitle = document.title;
+            if (mode === 'instructor') {
+                document.title = '전화상담_신뢰도_전체평균_리포트';
+            } else {
+                const nameVal = (document.getElementById('participant-name')?.value || '참여자').trim();
+                document.title = `전화상담_신뢰도_진단결과_${nameVal}`;
+            }
+            window.print();
+            setTimeout(() => {
+                document.title = originalTitle;
+            }, 500);
+        }
+
+        // 페이지 로드 시 문항 생성
+        window.addEventListener('DOMContentLoaded', () => {
+            renderQuestions();
+        });
+    </script>
+</body>
+</html>
